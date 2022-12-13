@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.example.shixun.SearchView
+        android:layout_alignParentTop="true"
+        android:id="@+id/searchView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/searchResult"
+        android:layout_below="@+id/searchView" />
+
+    <TextView
+        android:textColor="#000"
+        android:gravity="center"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="没有搜索到相关信息"
+        android:id="@+id/message"
+        android:visibility="invisible"
+        android:layout_below="@+id/searchView"/>
+</RelativeLayout>
