@@ -39,15 +39,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.w3c.dom.Text;
-
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     public static Handler handler = new Handler(Looper.getMainLooper()){
@@ -84,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private PcmPlayer pcmPlayer;
     private MyMediaPlayer mediaPlayer;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private List<String> checkedFilePath = new ArrayList<>();
 
     private static final File EXTERNAL_STORAGE = Environment.getExternalStorageDirectory();
     private static String savaPath = EXTERNAL_STORAGE+"/record";
@@ -152,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View view) {
+        int len = 0;
         switch(view.getId()){
             case R.id.search_bar:
                 startActivity(new Intent(MainActivity.this,Search.class));
@@ -187,6 +185,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 erase_opts.setLayoutParams(params);
                 reGetData(0);
                 break;
+            case R.id.main_delete:
+                len = checkedFilePath.size();
+                if(len == 0){
+                    Toast.makeText(MainActivity.this,"请选择内容",Toast.LENGTH_SHORT).show();
+                    break;
+                }
+                //Log.i("MainActivity","delete files:");
+                for(int i=0;i<len;i++){
+                    //Log.i("MainActivity",checkedFilePath.get(i));
+                    new File(checkedFilePath.get(i)).delete();
+                }
+                reGetData(1);
+                //Toast.makeText(MainActivity.this,"删除成功",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.main_exchange:
+                len = checkedFilePath.size();
+                if(len == 0){
+                    Toast.makeText(MainActivity.this,"请选择内容",Toast.LENGTH_SHORT).show();
+                    break;
+                }
+                for(int i=0;i<len;i++){
+                    String path = checkedFilePath.get(i);
+                    if(path.endsWith(".pcm")) {
+                        AudioUtil.pcmToWav(path,path.substring(0, path.length() - 3) + "wav");
+                    }
+                }
+                reGetData(1);
+                //Toast.makeText(MainActivity.this,"已将选中的pcm文件转换成wav",Toast.LENGTH_SHORT).show();
+                break;
         }
     }
 
@@ -221,6 +248,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void reGetData(int Type){
+        if(Type==1) checkedFilePath.clear();
         audioList = getDate("");
         ada = new MyAdapter(Type);
         rec.setAdapter(ada);
@@ -392,7 +420,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-
+                        if(b){
+                            if(!checkedFilePath.contains(file.getPath())){
+                                checkedFilePath.add(file.getPath());
+                            }
+                        }else{
+                            if(checkedFilePath.contains(file.getPath())){
+                                checkedFilePath.remove(file.getPath());
+                            }
+                        }
                     }
                 });
             }

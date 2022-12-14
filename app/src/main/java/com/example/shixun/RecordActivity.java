@@ -9,6 +9,8 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -21,6 +23,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -40,7 +43,20 @@ public class RecordActivity extends AppCompatActivity implements View.OnClickLis
     private byte[] buffer = null;
     private TextView recordText = null;
     private TextView recordTime = null;
+    private Timer timer = new Timer();
+    private TimerTask timerTask = null;
 
+    private final Handler handler = new Handler(Looper.getMainLooper()){
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            Bundle bundle = msg.getData();
+            int time = bundle.getInt("time");
+            int hh = time/3600;
+            int mm = (time%3600)/60;
+            int ss = time%60;
+            recordTime.setText(String.format("%02d:%02d:%02d",hh,mm,ss));
+        }
+    };
     private static final int MY_PERMISSIONS_REQUEST = 200;
     private static final File external_path = Environment.getExternalStorageDirectory();
     private static final String save_path = external_path + "/record";
@@ -84,18 +100,18 @@ public class RecordActivity extends AppCompatActivity implements View.OnClickLis
         animation.setRepeatMode(Animation.REVERSE);
         recordText.startAnimation(animation);
 
-        final Handler handler = new Handler();
-        handler.post(new Runnable() {
+        timerTask = new TimerTask() {
             @Override
             public void run() {
-                int hh = cnt/3600;
-                int mm = (cnt%3600)/60;
-                int ss = cnt%60;
-                recordTime.setText(String.format("%02d:%02d:%02d",hh,mm,ss));
+                Message msg = handler.obtainMessage();
+                Bundle bundle = new Bundle();
+                bundle.putInt("time",cnt);
                 cnt++;
-                handler.postDelayed(this,1000);
+                msg.setData(bundle);
+                handler.sendMessage(msg);
             }
-        });
+        };
+        timer.schedule(timerTask,0,1000);
 
         sv.setOnClickListener(this);
         back.setOnClickListener(this);
@@ -163,6 +179,11 @@ public class RecordActivity extends AppCompatActivity implements View.OnClickLis
         switch (view.getId()) {
             case R.id.save_btn:
                 stop();
+                if(timerTask!=null){
+                    timerTask.cancel();
+                    timer.purge();
+                    timerTask = null;
+                }
                 Sava_Dialog dg = new Sava_Dialog(this);
                 dg.getSava().setOnClickListener(new View.OnClickListener() {
                     @Override
