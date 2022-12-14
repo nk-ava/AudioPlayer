@@ -4,6 +4,8 @@ import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.os.Bundle;
+import android.os.Message;
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -12,6 +14,8 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class PcmPlayer {
     private static final int AUDIO_SAMPLE_RATE = 44100;
@@ -23,9 +27,13 @@ public class PcmPlayer {
     private Thread playThread = null;
     private boolean isPlaying = false;
     private String src_playing = null;
+    private File source = null;
     private Object lock = new Object();
     private boolean isPause = false;
+    private Timer timer = new Timer();
+    private TimerTask timerTask = null;
     private Context mContext;
+    private int num;
 
     public PcmPlayer(Context mContext){
         this.mContext = mContext;
@@ -47,11 +55,13 @@ public class PcmPlayer {
         }
         //Log.i("PcmPlayer","不同音频新建播放");
         stopPlay();
-        File source = new File(src);
+        source = new File(src);
         //Log.i("PcmPlayer", "AudioTrack状态-" + mAudioTrack.getState() + "");
         mAudioTrack.play();
         isPlaying = true;
         src_playing = src;
+        num = 0;
+        addTimer();
         //Log.i("PcmPlayer", "开始播放....");
         try {
             FileInputStream fis = new FileInputStream(source);
@@ -82,10 +92,12 @@ public class PcmPlayer {
                             }
                             if (readCount != 0 && readCount != -1) {
                                 mAudioTrack.write(tempBuffer, 0, readCount);
+                                num+=readCount;
                             }
                         }
                         img.setTag("pause");
                         img.setImageDrawable(mContext.getResources().getDrawable(R.drawable.play));
+                        //Log.i("PcmPlayer","播放了"+num);
                         src_playing = null;
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -128,11 +140,38 @@ public class PcmPlayer {
                 e.printStackTrace();
             }
         }
+        if(timerTask!=null){
+            timerTask.cancel();
+            timerTask = null;
+            timer.purge();
+        }
         src_playing = null;
         isPause = false;
     }
 
     public void pause() {
         isPause = true;
+    }
+
+    private void addTimer(){
+        if(timerTask!=null){
+            timerTask.cancel();
+            timerTask = null;
+            timer.purge();
+        }
+        timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                int duration = (int) (source.length()/176400.0);
+                int currentPosition = (int) (num/176400.0);
+                Bundle bundle = new Bundle();
+                bundle.putInt("duration",duration);
+                bundle.putInt("currentPosition",currentPosition);
+                Message msg = MainActivity.handler.obtainMessage();
+                msg.setData(bundle);
+                MainActivity.handler.sendMessage(msg);
+            }
+        };
+        timer.schedule(timerTask,5,500);
     }
 }

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.Image;
 import android.media.MediaPlayer;
+import android.os.Bundle;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.ImageView;
@@ -11,11 +13,16 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.PublicKey;
+import java.util.Timer;
+import java.util.TimerTask;
 
-public class MyMediaPlayer extends MediaPlayer {
+public class MyMediaPlayer{
     private MediaPlayer play = null;
     private Context mContext = null;
     private String src_playing = null;
+    private Timer timer = new Timer();
+    private TimerTask timerTask = null;
 
     public MyMediaPlayer(Context mContext){
         play = new MediaPlayer();
@@ -31,16 +38,16 @@ public class MyMediaPlayer extends MediaPlayer {
         play.reset();
         try {
             play.setDataSource(wavPath);
-            play.setAudioStreamType(AudioManager.STREAM_MUSIC);
             play.prepareAsync();
-            play.setOnPreparedListener(new OnPreparedListener() {
+            play.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mediaPlayer) {
                     mediaPlayer.start();
+                    addTimer();
                     src_playing = wavPath;
                 }
             });
-            play.setOnCompletionListener(new OnCompletionListener() {
+            play.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
                     mediaPlayer.stop();
@@ -70,7 +77,35 @@ public class MyMediaPlayer extends MediaPlayer {
     }
 
     public void reset(){
-        super.reset();
+        play.stop();
+        play.reset();
+        if(timerTask!=null){
+            timerTask.cancel();
+            timerTask = null;
+            timer.purge();
+        }
         src_playing = null;
+    }
+
+    private void addTimer(){
+        if(timerTask!=null){
+            timerTask.cancel();
+            timerTask = null;
+            timer.purge();
+        }
+        timerTask =  new TimerTask() {
+            @Override
+            public void run() {
+                int duration = play.getDuration()/1000;
+                int currentPosition = play.getCurrentPosition()/1000;
+                Bundle bundle = new Bundle();
+                bundle.putInt("duration",duration);
+                bundle.putInt("currentPosition",currentPosition);
+                Message msg = MainActivity.handler.obtainMessage();
+                msg.setData(bundle);
+                MainActivity.handler.sendMessage(msg);
+            }
+        };
+        timer.schedule(timerTask,5,500);
     }
 }
