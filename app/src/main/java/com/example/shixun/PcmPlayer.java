@@ -5,6 +5,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.widget.ImageView;
@@ -32,11 +33,13 @@ public class PcmPlayer {
     private boolean isPause = false;
     private Timer timer = new Timer();
     private TimerTask timerTask = null;
+    private Handler mHandler = null;
     private Context mContext;
     private int num;
 
-    public PcmPlayer(Context mContext){
+    public PcmPlayer(Context mContext, Handler mHandler){
         this.mContext = mContext;
+        this.mHandler = mHandler;
     }
 
     static {
@@ -167,9 +170,9 @@ public class PcmPlayer {
                 Bundle bundle = new Bundle();
                 bundle.putInt("duration",duration);
                 bundle.putInt("currentPosition",currentPosition);
-                Message msg = MainActivity.handler.obtainMessage();
+                Message msg = mHandler.obtainMessage();
                 msg.setData(bundle);
-                MainActivity.handler.sendMessage(msg);
+                mHandler.sendMessage(msg);
             }
         };
         timer.schedule(timerTask,5,500);

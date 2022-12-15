@@ -5,6 +5,7 @@ import android.media.AudioManager;
 import android.media.Image;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -18,15 +19,17 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MyMediaPlayer{
+    private Handler mHandler = null;
     private MediaPlayer play = null;
     private Context mContext = null;
     private String src_playing = null;
     private Timer timer = new Timer();
     private TimerTask timerTask = null;
 
-    public MyMediaPlayer(Context mContext){
+    public MyMediaPlayer(Context mContext, Handler mHandler){
         play = new MediaPlayer();
         this.mContext = mContext;
+        this.mHandler = mHandler;
         //Log.i("MyMediaPlayer","实例创建成功...");
     }
 
@@ -101,9 +104,9 @@ public class MyMediaPlayer{
                 Bundle bundle = new Bundle();
                 bundle.putInt("duration",duration);
                 bundle.putInt("currentPosition",currentPosition);
-                Message msg = MainActivity.handler.obtainMessage();
+                Message msg = mHandler.obtainMessage();
                 msg.setData(bundle);
-                MainActivity.handler.sendMessage(msg);
+                mHandler.sendMessage(msg);
             }
         };
         timer.schedule(timerTask,5,500);

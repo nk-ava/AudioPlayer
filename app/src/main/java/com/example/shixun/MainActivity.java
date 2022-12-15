@@ -46,7 +46,7 @@ import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    public static Handler handler = new Handler(Looper.getMainLooper()){
+    private final Handler handler = new Handler(Looper.getMainLooper()){
         @Override
         public void handleMessage(@NonNull Message msg) {
             Bundle bundle = msg.getData();
@@ -58,8 +58,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             len.setText(timeToFormat((long) length));
         }
     };
-    private static SeekBar sk;
-    private static TextView cur,len;
+    private SeekBar sk;
+    private TextView cur,len;
     private LinearLayout skp = null;
     private Button record_btn = null;
     private ImageView imv = null;
@@ -118,8 +118,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         exchange = findViewById(R.id.main_exchange);
         really = findViewById(R.id.main_really);
 
-        pcmPlayer = new PcmPlayer(MainActivity.this);
-        mediaPlayer = new MyMediaPlayer(MainActivity.this);
+        pcmPlayer = new PcmPlayer(MainActivity.this, handler);
+        mediaPlayer = new MyMediaPlayer(MainActivity.this, handler);
         skp.setOnClickListener(this);
         record_btn.setOnClickListener(this);
         imv.setOnClickListener(this);
@@ -259,6 +259,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public MyAdapter(int mType){
             super();
             this.mType = mType;
+            tag = null;
+            lastImg = null;
         }
 
         @NonNull
@@ -276,6 +278,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Audio file = audioList.get(position);
             String tm = timeToFormat(file.getTime());
             if(mType==0) {
+                holder.setIsRecyclable(false);
                 ((MyViewHolder) holder).name.setText(file.getName());
                 ((MyViewHolder) holder).date.setText(file.getDate());
                 ((MyViewHolder) holder).time.setText(tm);
@@ -294,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             LinearLayout.LayoutParams params_temp = (LinearLayout.LayoutParams) tag.getLayoutParams();
                             params_temp.height = 0;
                             tag.setLayoutParams(params_temp);
-                            if (lastImg.getTag().equals("play")) {
+                            if (lastImg!=null && lastImg.getTag().equals("play")) {
                                 lastImg.setImageDrawable(getResources().getDrawable(R.drawable.play));
                                 lastImg.setTag("pause");
                             }
@@ -307,20 +310,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (img.getTag().equals("pause")) {
                             img.setImageDrawable(getResources().getDrawable(R.drawable.pause));
                             img.setTag("play");
+                            sk = sb;
+                            cur = current;
+                            len = length;
                             if (file.getName().matches("(.*)\\.pcm")) {
                                 mediaPlayer.reset();
                                 //Log.i("MainActivity","重置mediaPlayer成功");
-                                sk = sb;
-                                cur = current;
-                                len = length;
                                 pcmPlayer.play(file.getPath(), img);
                             }
                             if (file.getName().matches("(.*)\\.wav")) {
                                 pcmPlayer.stopPlay();
                                 //Log.i("MainActivity","停止pcmPlayer成功");
-                                sk = sb;
-                                cur = current;
-                                len = length;
                                 mediaPlayer.play(file.getPath(), img);
                             }
                         } else {
