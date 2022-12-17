@@ -5,12 +5,14 @@ public class Audio {
     private String date;
     private long time;
     private String path;
+    private boolean stata;
 
-    public Audio(String name, String date, long time, String path) {
+    public Audio(String name, String date, long time, String path, boolean stata) {
         this.name = name;
         this.date = date;
         this.time = time;
         this.path = path;
+        this.stata = stata;
     }
 
     public String getPath() {
@@ -43,5 +45,13 @@ public class Audio {
 
     public void setDate(String date) {
         this.date = date;
+    }
+
+    public boolean isStata() {
+        return stata;
+    }
+
+    public void setStata(boolean stata) {
+        this.stata = stata;
     }
 }

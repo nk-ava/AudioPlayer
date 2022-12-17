@@ -100,6 +100,7 @@ public class PcmPlayer {
                         }
                         img.setTag("pause");
                         img.setImageDrawable(mContext.getResources().getDrawable(R.drawable.play));
+                        MainActivity.state = "pause";
                         //Log.i("PcmPlayer","播放了"+num);
                         src_playing = null;
                     } catch (Exception e) {

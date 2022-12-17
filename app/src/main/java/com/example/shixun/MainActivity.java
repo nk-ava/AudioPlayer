@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final Handler handler = new Handler(Looper.getMainLooper()){
         @Override
         public void handleMessage(@NonNull Message msg) {
+            //Log.i("MainActivity","接收数据中...");
             Bundle bundle = msg.getData();
             int length = bundle.getInt("duration");
             int current = bundle.getInt("currentPosition");
@@ -81,6 +82,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private MyMediaPlayer mediaPlayer;
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private List<String> checkedFilePath = new ArrayList<>();
+    private int pos = -1;
+    public static String state = null;
 
     private static final File EXTERNAL_STORAGE = Environment.getExternalStorageDirectory();
     private static String savaPath = EXTERNAL_STORAGE+"/record";
@@ -242,7 +245,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //if(name.matches("(.*)\\.mp3$")) format=1;
             if(format==0) continue;
             //Log.i("MainActivity",list[i].length()+"B");
-            temp.add(new Audio(name,date,time,list[i].getAbsolutePath()+""));
+            temp.add(new Audio(name,date,time,list[i].getAbsolutePath()+"", false));
         }
         return temp;
     }
@@ -261,6 +264,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             this.mType = mType;
             tag = null;
             lastImg = null;
+            pos = -1;
         }
 
         @NonNull
@@ -275,10 +279,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            //Log.i("MainActivity","复用位置："+position);
             Audio file = audioList.get(position);
             String tm = timeToFormat(file.getTime());
             if(mType==0) {
-                holder.setIsRecyclable(false);
                 ((MyViewHolder) holder).name.setText(file.getName());
                 ((MyViewHolder) holder).date.setText(file.getDate());
                 ((MyViewHolder) holder).time.setText(tm);
@@ -289,9 +293,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 TextView current = ((MyViewHolder) holder).current;
                 TextView length = ((MyViewHolder) holder).length;
                 img.setVisibility(View.VISIBLE);
+                if(position != pos){
+                    img.setTag("pause");
+                    img.setImageDrawable(getResources().getDrawable(R.drawable.play));
+                    LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) lay.getLayoutParams();
+                    params.height = 0;
+                    lay.setLayoutParams(params);
+                }else{
+                    img.setTag(state);
+                    if(state.equals("play")) img.setImageDrawable(getResources().getDrawable(R.drawable.pause));
+                    else img.setImageDrawable(getResources().getDrawable(R.drawable.play));
+                    LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) lay.getLayoutParams();
+                    params.height = File_Max_pxValue;
+                    lay.setLayoutParams(params);
+                }
                 img.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
+                        pos = holder.getAdapterPosition();
+                        //Log.i("MainActivity",pos+"");
                         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) lay.getLayoutParams();
                         if (tag != lay && tag != null) {
                             LinearLayout.LayoutParams params_temp = (LinearLayout.LayoutParams) tag.getLayoutParams();
@@ -333,6 +353,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 mediaPlayer.pause();
                             }
                         }
+                        state = (String) img.getTag();
                         lastImg = img;
                     }
                 });

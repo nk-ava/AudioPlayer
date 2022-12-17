@@ -57,6 +57,7 @@ public class MyMediaPlayer{
                     //Log.i("MyMediaPlayer",play.isPlaying()+"");
                     img.setTag("pause");
                     img.setImageDrawable(mContext.getResources().getDrawable(R.drawable.play));
+                    MainActivity.state = "pause";
                     src_playing = null;
                 }
             });
